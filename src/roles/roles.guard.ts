@@ -14,6 +14,8 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.headers;
 
+    console.log(user);
+
     // Check cookie with JWT token and get user roles
 
     //console.log(typeof JSON.stringify(user.auth_role));
@@ -22,4 +24,3 @@ export class RolesGuard implements CanActivate {
     // return user && matchRoles();
   }
 }
-// <- TS Error: Declaration or statement is required here???
