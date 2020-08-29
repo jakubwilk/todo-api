@@ -18,7 +18,7 @@ export class AuthService {
     return "martin";
   }
 
-  async generateToken(email: string, role: string): Promise<string> {
+  async generateToken(email: string, role: string[]): Promise<string> {
     const payload = { email: email, role: role };
 
     return this.jwtService.sign(payload, { expiresIn: '24h', secret: process.env['JWT_SECRET'] });
@@ -30,10 +30,9 @@ export class AuthService {
     return !!isValidToken;
   }
 
-  async extractUserRolesFromToken(token: string): Promise<Array<string>> {
-    const payload = await this.jwtService.verify(token, { secret: process.env['JWT_SECRET'] });
-    console.log(payload);
+  async extractRolesFromToken(token: string): Promise<string[]> {
+    const userToken = await this.jwtService.verify(token, { secret: process.env['JWT_SECRET'] });
 
-    return [payload.role];
+    return userToken.role;
   }
 }
