@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { Roles } from './auth.decorator';
 import { AuthGuard } from './auth.guard';
 import { LoginUserDto, RegisterUserDto } from '../dto/users.dto';
+import { Request } from 'express';
 
 @UseGuards(AuthGuard)
 @Controller('auth')
@@ -11,7 +12,7 @@ export class AuthController {
 
   @Get()
   @Roles('user')
-  async loginWithToken(@Req() req: Request) {
+  async autoLogin(@Req() req: Request) {
     console.log(req);
   }
 
@@ -21,12 +22,13 @@ export class AuthController {
   }
 
   @Get('logout')
+  @Roles('user')
   async logout(@Req() req: Request) {
     console.log(req);
   }
 
   @Put()
   async register(@Body() data: RegisterUserDto) {
-    console.log(data);
+    return await this.authService.createAccount(data);
   }
 }
