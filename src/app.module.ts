@@ -18,7 +18,11 @@ import { User } from './models/user.entity';
       password: process.env['DATABASE_PASSWORD'],
       database: process.env['DATABASE_NAME'],
       entities: [User],
-      synchronize: true
+      synchronize: false,
+      migrations: ['src/migrations/**/*.js'],
+      cli: {
+        migrationsDir: 'src/migrations'
+      }
     }),
     AuthModule
   ],

@@ -31,6 +31,7 @@ export class AuthService {
     const user = new User();
     user.login = login;
     user.password = password;
+    user.roles = 'user';
     user.blocked = false;
 
     const isUserCreated = await this.usersRepository.save(user);

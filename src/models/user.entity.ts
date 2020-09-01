@@ -13,6 +13,9 @@ export class User {
   password: string;
 
   @Column()
+  roles: string;
+
+  @Column()
   blocked: boolean;
 
   @CreateDateColumn()
