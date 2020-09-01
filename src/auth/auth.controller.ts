@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Roles } from './auth.decorator';
 import { AuthGuard } from './auth.guard';
@@ -13,7 +23,7 @@ export class AuthController {
   @Get()
   @Roles('user')
   async autoLogin(@Req() req: Request) {
-    console.log(req);
+    return await this.authService.loginWithToken();
   }
 
   @Post()
