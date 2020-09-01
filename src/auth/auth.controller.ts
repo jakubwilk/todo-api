@@ -1,19 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpException,
-  HttpStatus,
-  Post,
-  Put,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, Res, UseGuards, } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Roles } from './auth.decorator';
 import { AuthGuard } from './auth.guard';
 import { LoginUserDto, RegisterUserDto } from '../dto/users.dto';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @UseGuards(AuthGuard)
 @Controller('auth')
@@ -22,13 +12,14 @@ export class AuthController {
 
   @Get()
   @Roles('user')
-  async autoLogin(@Req() req: Request) {
+  async autoLogin() {
     return await this.authService.loginWithToken();
   }
 
   @Post()
-  async login(@Body() data: LoginUserDto) {
+  async login(@Body() data: LoginUserDto, @Res() res: Response) {
     console.log(data);
+    console.log(res);
   }
 
   @Get('logout')
