@@ -46,6 +46,14 @@ export class AuthService {
     };
   }
 
+  async loginWithToken(): Promise<BaseMessage> {
+    return {
+      statusCode: HttpStatus.ACCEPTED,
+      message: ['User token is valid'],
+      error: ''
+    }
+  }
+
   async generateToken(email: string, role: string[]): Promise<string> {
     const payload = { email: email, role: role };
 
@@ -53,9 +61,12 @@ export class AuthService {
   }
 
   async validateToken(token: string): Promise<boolean> {
-    const isValidToken = await this.jwtService.verify(token, { secret: process.env['JWT_SECRET'] });
-
-    return !!isValidToken;
+    try {
+      const isValidToken = await this.jwtService.verify(token, { secret: process.env['JWT_SECRET'] });
+      return true;
+    } catch (err) {
+      return false
+    }
   }
 
   async extractRolesFromToken(token: string): Promise<string[]> {
