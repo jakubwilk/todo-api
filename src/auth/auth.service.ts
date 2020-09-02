@@ -1,10 +1,19 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterUserDto } from '../dto/users.dto';
+import {
+  LoginUserDto,
+  RegisterUserDto,
+} from '../dto/users.dto';
 import { BaseMessage } from '../interfaces/base-message.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../models/user.entity';
 import { Repository } from 'typeorm';
+import * as argon2
+  from 'argon2';
 
 @Injectable()
 export class AuthService {
@@ -21,11 +30,11 @@ export class AuthService {
     const isUserExists = await this.usersRepository.findOne({ login: login });
 
     if (isUserExists) {
-      throw new HttpException(['User with this address email already exists'], HttpStatus.BAD_REQUEST);
+      throw new HttpException({ message: ['User with this address email already exists'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
     }
 
     if (password !== repeat_password) {
-      throw new HttpException(['Passwords must be the same'], HttpStatus.BAD_REQUEST);
+      throw new HttpException({ message: ['Passwords must be the same'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
     }
 
     const user = new User();
@@ -37,22 +46,25 @@ export class AuthService {
     const isUserCreated = await this.usersRepository.save(user);
 
     if (!isUserCreated) {
-      throw new HttpException(['Server encountered a problem while creating a new user'], HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException({ message: ['Server encountered a problem while creating a new user'], error: 'Internal Server Error' }, HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     return {
-      statusCode: HttpStatus.CREATED,
       message: ['Account successfully created'],
       error: ''
     };
   }
 
-  async loginWithToken(): Promise<BaseMessage> {
-    return {
-      statusCode: HttpStatus.ACCEPTED,
-      message: ['User token is valid'],
-      error: ''
-    }
+  async loginUser(userData: LoginUserDto): Promise<string> {
+    const { login, password } = userData;
+
+    const userObject = await this.usersRepository.findOne({ login: login });
+    if (!userObject) throw new HttpException({ message: ['User with that login was not found'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
+
+    const isValidPassword = await argon2.verify(userObject.password, password);
+    if (!isValidPassword) throw new HttpException({ message: ['Incorrect password'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
+
+    return await this.generateToken(userObject.login, ['user']);
   }
 
   async generateToken(email: string, role: string[]): Promise<string> {

@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -22,14 +23,14 @@ export class AuthGuard implements CanActivate {
     if (!roles) return true;
 
     const request = context.switchToHttp().getRequest();
-    const user = request.headers;
+    const token = request.headers.authorization;
 
-    if (!user.auth_token) throw new HttpException(['Missing user token'], HttpStatus.UNAUTHORIZED);
+    if (!token) throw new UnauthorizedException({ message: ['Missing user token'], error: 'Unauthorized' });
 
-    const isValidToken = await this.authService.validateToken(user.auth_token);
-    if (!isValidToken) throw new HttpException(['Unfortunately token is not valid'], HttpStatus.UNAUTHORIZED);
+    const isValidToken = await this.authService.validateToken(token.replace('Bearer ', ''));
+    if (!isValidToken) throw new HttpException({ message: ['Unfortunately token is not valid'], error: 'Unauthorized' }, HttpStatus.UNAUTHORIZED);
 
-    const userRoles = await this.authService.extractRolesFromToken(user.auth_token);
+    const userRoles = await this.authService.extractRolesFromToken(token.replace('Bearer ', ''));
     const matchRoles = () => userRoles.some(role => roles.includes(role));
 
     return matchRoles();
