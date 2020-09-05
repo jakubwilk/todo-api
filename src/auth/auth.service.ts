@@ -14,6 +14,7 @@ import { User } from '../models/user.entity';
 import { Repository } from 'typeorm';
 import * as argon2
   from 'argon2';
+import { UserRoles } from '../constants/roles.consts';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +41,7 @@ export class AuthService {
     const user = new User();
     user.login = login;
     user.password = password;
-    user.roles = 'user';
+    user.roles = UserRoles.USER_ROLE;
     user.blocked = false;
 
     const isUserCreated = await this.usersRepository.save(user);
