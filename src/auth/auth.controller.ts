@@ -2,10 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   Post,
   Put,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -13,7 +13,7 @@ import { AuthService } from './auth.service';
 import { Roles } from './auth.decorator';
 import { AuthGuard } from './auth.guard';
 import { LoginUserDto, RegisterUserDto } from '../dto/users.dto';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 @UseGuards(AuthGuard)
 @Controller('auth')
@@ -43,9 +43,12 @@ export class AuthController {
 
   @Get('logout')
   @HttpCode(200)
+  @Header('Authorization', 'none')
   @Roles('user')
-  async logout(@Req() req: Request) {
-    console.log(req);
+  async logout(@Res() res: Response) {
+    return res
+      .clearCookie('authToken')
+      .json({ message: ['User successfully logged'], error: '' });
   }
 
   @Put()
