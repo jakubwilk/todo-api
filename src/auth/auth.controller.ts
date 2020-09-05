@@ -14,6 +14,7 @@ import { Roles } from './auth.decorator';
 import { AuthGuard } from './auth.guard';
 import { LoginUserDto, RegisterUserDto } from '../dto/users.dto';
 import { Response } from 'express';
+import { UserRoles } from '../constants/roles.consts';
 
 @UseGuards(AuthGuard)
 @Controller('auth')
@@ -22,7 +23,7 @@ export class AuthController {
 
   @Get()
   @HttpCode(200)
-  @Roles('user')
+  @Roles(UserRoles.USER_ROLE)
   async autoLogin() {
     return {
       message: ['User successfully logged'],
@@ -44,7 +45,7 @@ export class AuthController {
   @Get('logout')
   @HttpCode(200)
   @Header('Authorization', 'none')
-  @Roles('user')
+  @Roles(UserRoles.USER_ROLE)
   async logout(@Res() res: Response) {
     return res
       .clearCookie('authToken')
