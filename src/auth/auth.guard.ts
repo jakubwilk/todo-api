@@ -25,10 +25,14 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = request.headers.authorization;
 
-    if (!token) throw new UnauthorizedException({ message: ['Missing user token'], error: 'Unauthorized' });
+    if (!token) throw new UnauthorizedException({
+      message: ['Missing user token'],
+      error: 'Unauthorized' });
 
     const isValidToken = await this.authService.validateToken(token.replace('Bearer ', ''));
-    if (!isValidToken) throw new HttpException({ message: ['Unfortunately token is not valid'], error: 'Unauthorized' }, HttpStatus.UNAUTHORIZED);
+    if (!isValidToken) throw new HttpException({
+      message: ['Unfortunately token is not valid'],
+      error: 'Unauthorized' }, HttpStatus.UNAUTHORIZED);
 
     const userRoles = await this.authService.extractRolesFromToken(token.replace('Bearer ', ''));
     const matchRoles = () => userRoles.some(role => roles.includes(role));

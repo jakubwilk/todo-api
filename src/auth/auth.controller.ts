@@ -6,8 +6,10 @@ import {
   HttpCode,
   Post,
   Put,
+  Req,
   Res,
   UseGuards,
+  Headers
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Roles } from './auth.decorator';
@@ -24,11 +26,11 @@ export class AuthController {
   @Get()
   @HttpCode(200)
   @Roles(UserRoles.USER_ROLE)
-  async autoLogin() {
-    return {
-      message: ['User successfully logged'],
-      error: ''
-    }
+  async autoLogin(@Headers() headers: any) {
+    const { authorization } = headers;
+    const token = authorization.split(" ")[1];
+
+    return await this.authService.loginWithToken(token);
   }
 
   @Post()
@@ -37,9 +39,8 @@ export class AuthController {
     const token = await this.authService.loginUser(data);
 
     return res
-      .cookie('authToken', token, { secure: true, httpOnly: true, maxAge: 86400000 })
       .set('Authorization', `Bearer ${token}`)
-      .json({ message: ['User successfully logged'], error: '' });
+      .json({ message: ['User successfully logged']});
   }
 
   @Get('logout')
@@ -49,7 +50,7 @@ export class AuthController {
   async logout(@Res() res: Response) {
     return res
       .clearCookie('authToken')
-      .json({ message: ['User successfully logged'], error: '' });
+      .json({ message: ['User successfully logged']});
   }
 
   @Put()

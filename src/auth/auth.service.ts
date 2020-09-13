@@ -15,6 +15,7 @@ import { Repository } from 'typeorm';
 import * as argon2
   from 'argon2';
 import { UserRoles } from '../constants/roles.consts';
+import { UserModel } from '../interfaces/user-model.interface';
 
 @Injectable()
 export class AuthService {
@@ -31,11 +32,15 @@ export class AuthService {
     const isUserExists = await this.usersRepository.findOne({ login: login });
 
     if (isUserExists) {
-      throw new HttpException({ message: ['User with this address email already exists'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException({
+        message: ['User with this address email already exists'],
+        error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
     }
 
     if (password !== repeat_password) {
-      throw new HttpException({ message: ['Passwords must be the same'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException({
+        message: ['Passwords must be the same'],
+        error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
     }
 
     const user = new User();
@@ -47,31 +52,53 @@ export class AuthService {
     const isUserCreated = await this.usersRepository.save(user);
 
     if (!isUserCreated) {
-      throw new HttpException({ message: ['Server encountered a problem while creating a new user'], error: 'Internal Server Error' }, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException({
+        message: ['Server encountered a problem while creating a new user'],
+        error: 'Internal Server Error' }, HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     return {
       message: ['Account successfully created'],
-      error: ''
     };
+  }
+
+  async loginWithToken(token: string): Promise<BaseMessage> {
+    const userId = await this.extractUserIdFromToken(token);
+    const userData = await this.usersRepository.findOne({ id: userId })
+
+    const user = UserObject(userData);
+
+    return {
+      message: ['User successfully logged'],
+      data: user
+    }
   }
 
   async loginUser(userData: LoginUserDto): Promise<string> {
     const { login, password } = userData;
 
     const userObject = await this.usersRepository.findOne({ login: login });
-    if (!userObject) throw new HttpException({ message: ['User with that login was not found'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
+    if (!userObject) throw new HttpException({
+      message: ['User with that login was not found'],
+      error: 'Bad Request'
+    }, HttpStatus.BAD_REQUEST);
 
     const isValidPassword = await argon2.verify(userObject.password, password);
-    if (!isValidPassword) throw new HttpException({ message: ['Incorrect password'], error: 'Bad Request' }, HttpStatus.BAD_REQUEST);
+    if (!isValidPassword) throw new HttpException({
+      message: ['Incorrect password'],
+      error: 'Bad Request'
+    }, HttpStatus.BAD_REQUEST);
 
-    return await this.generateToken(userObject.login, ['user']);
+    return await this.generateToken(userObject.id, userObject.login, [userObject.roles]);
   }
 
-  async generateToken(email: string, role: string[]): Promise<string> {
-    const payload = { email: email, role: role };
+  async generateToken(id: string, email: string, role: string[]): Promise<string> {
+    const payload = { id: id, email: email, role: role };
 
-    return this.jwtService.sign(payload, { expiresIn: '24h', secret: process.env['JWT_SECRET'] });
+    return this.jwtService.sign(payload, {
+      expiresIn: '24h',
+      secret: process.env['JWT_SECRET']
+    });
   }
 
   async validateToken(token: string): Promise<boolean> {
@@ -87,5 +114,20 @@ export class AuthService {
     const userToken = await this.jwtService.verify(token, { secret: process.env['JWT_SECRET'] });
 
     return userToken.role;
+  }
+
+  async extractUserIdFromToken(token: string): Promise<string> {
+    const userToken = await this.jwtService.verify(token, { secret: process.env['JWT_SECRET'] });
+
+    return userToken.id;
+  }
+}
+
+const UserObject = (user): UserModel => {
+  return {
+    login: user.login,
+    roles: [user.roles],
+    created_at: user.created_at,
+    update_at: user.update_at
   }
 }
