@@ -8,7 +8,10 @@ import {
   LoginUserDto,
   RegisterUserDto,
 } from '../dto/users.dto';
-import { BaseMessage } from '../interfaces/base-message.interface';
+import {
+  BaseMessage,
+  LoginUserModel,
+} from '../interfaces/base.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../models/user.entity';
 import { Repository } from 'typeorm';
@@ -74,7 +77,7 @@ export class AuthService {
     }
   }
 
-  async loginUser(userData: LoginUserDto): Promise<string> {
+  async loginUser(userData: LoginUserDto): Promise<LoginUserModel> {
     const { login, password } = userData;
 
     const userObject = await this.usersRepository.findOne({ login: login });
@@ -89,7 +92,15 @@ export class AuthService {
       error: 'Bad Request'
     }, HttpStatus.BAD_REQUEST);
 
-    return await this.generateToken(userObject.id, userObject.login, [userObject.roles]);
+    const token = await this.generateToken(userObject.id, userObject.login, [userObject.roles]);
+    const user: UserModel = {
+      login: userObject.login,
+      roles: [userObject.roles],
+      created_at: userObject.created_at,
+      update_at: userObject.update_at
+    }
+
+    return { token: token, user: user };
   }
 
   async generateToken(id: string, email: string, role: string[]): Promise<string> {

@@ -6,7 +6,6 @@ import {
   HttpCode,
   Post,
   Put,
-  Req,
   Res,
   UseGuards,
   Headers
@@ -36,11 +35,12 @@ export class AuthController {
   @Post()
   @HttpCode(200)
   async login(@Body() data: LoginUserDto, @Res() res: Response) {
-    const token = await this.authService.loginUser(data);
+    const userData = await this.authService.loginUser(data);
+    const { token, user } = userData;
 
     return res
       .set('Authorization', `Bearer ${token}`)
-      .json({ message: ['User successfully logged']});
+      .json({ message: ['User successfully logged'], data: user});
   }
 
   @Get('logout')
